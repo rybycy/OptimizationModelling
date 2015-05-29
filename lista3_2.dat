@@ -1,20 +1,33 @@
 /*********************************************
- * OPL 12.3 Data
- * Author: pziel
- * Creation Date: 21-09-2011 at 12:27:08
+ * OPL 12.6.0.0 Model
+ * Author: Michal Robaszynski
  *********************************************/
+ 
 m = 7; //liczba zadan
-n = 3; //liczba maszyn
+n = 1; //liczba zasobow
 
+// ile dostepne i-tego zasobu
+z = [ 15 ];
 
+// wykorzystanie j-tego zasobu dla i-tego zadania 
+u =  [
+       [3],
+       [9],
+       [9],
+       [4],
+       [6],
+       [6],
+       [7]
+      ];  
+      
+// <i,j> - j musi byc wykonane po i
+pred = {
+		<1, 2>,
+		<2, 3>,
+		<3, 4>
+		};
 
-// czasy wykonia i-tego zadania na j-tej maszynie 
-d =  [
-       [3,       3,       2],
-       [9,       3,       8],
-       [9,       8,       5],
-       [4,       8,       4],
-       [6,      10,       3],
-       [6,       3,       1],
-       [7,      10,       3]
-      ];       
+// czas wykonania i-tego zadania
+d = [
+	5, 10, 15, 20, 25, 30, 35
+	];
