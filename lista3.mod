@@ -11,49 +11,47 @@ range Task = 1..m;
 range Resource = 1..n;
 
 tuple Pred {
-	key int pred;
+	int pred;
 	int succ;
 }
 
 float z[Resource] = ...;
 float d[Task] = ...; //d_ij czas wykonania zadania i
-float u[Task][Resource] = ...; //wykorzystanie zasobow przez zadania
+int u[Task][Resource] = ...; //wykorzystanie zasobow przez zadania
 {Pred} pred = ...;
 
-
-
-tuple ResourceTaskTask {
-  int j;
-  int i;
-  int k;
+tuple TaskTask {
+	int i;
+	int j;
 }
+
+{TaskTask} Precedence = {<i,j> | i in Task, j in Task: i<j};
 
 // zmienne decyzyjne
 dvar float+ t[Task]; // zmienne moment rozpoczecia i-tego zadania 
 dvar float+ ms; //zmienna czas zakonczenia wykonawania wszystkich zadan - makespan 
- 
- // funckcja celu
+dvar boolean wspolne[Precedence];
+
+// funckcja celu
 minimize 
 	ms; //minimalizacja czasu zakonczenia wszystkich zadan
 
 subject to{
-  // moment rozpoczecia i-tego zadania na j+1-szej maszynie 
-  // musi >= od momentu zakonczenia i-tego zadania na j-tej maszynie   
-  // chcemy z tego zrobic zaleznosc miedzy zadaniami
+  // zaleznosci czasowe miedzy zadaniami
+  // nie zaczynamy przed ukonczeniem poprzedniego
   forall(<i,j> in pred)
   	 poprzedzanie:
-  	   t[j]>=t[i]+d[i]; 
+  	   t[j]>=t[i]+d[i];
+  
+  forall(<i,j> in Precedence)
+    wsp:
+    	( t[j] - t[i] >= d[i] ) == 1-wspolne[<i,j>];//j zaczyna sie pozniej 
   	   
-  // t_ij>=t_kj+d_kj lub t_kj>=t_ij+d_ij 
-  // ograniczenia zosobowe tj,. tylko jedno zadanie wykonywane jest
-  // w danym momencie na j-tej maszynie 	   
-//  forall(<j,i,k> in Precedence) 
-//  	zasoby1:
-//  	   t[i]-t[k]+B*y[<j,i,k>]<=d[k];
-//  forall(<j,i,k> in Precedence) 	   
-//  	zasoby2:
-//  	  	 t[k][j]-t[i][j]+B*(1-y[<j,i,k>])>=d[i][j]; 
-  	  	 
+   // ograniczenia zasobow
+   forall(r in Resource)
+   	zasoby:
+   		(sum(i in Task,j in Task:i<j) wspolne[<i,j>]*u[i][r]) <= z[r];
+  	 
   // ms rowna sie czas zakonczenia wszystkich zadan na ostatniej maszynie	  	   
   forall(i in Task)
   	dociskanie:

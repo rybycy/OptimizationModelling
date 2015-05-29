@@ -3,31 +3,39 @@
  * Author: Michal Robaszynski
  *********************************************/
  
-m = 7; //liczba zadan
+m = 8; //liczba zadan
 n = 1; //liczba zasobow
 
 // ile dostepne i-tego zasobu
-z = [ 15 ];
+z = [ 30 ];
 
 // wykorzystanie j-tego zasobu dla i-tego zadania 
 u =  [
-       [3],
        [9],
-       [9],
+       [17],
+       [11],
        [4],
-       [6],
-       [6],
-       [7]
+       [13],
+       [7],
+       [7],
+       [17]
       ];  
       
 // <i,j> - j musi byc wykonane po i
 pred = {
 		<1, 2>,
-		<2, 3>,
-		<3, 4>
+		<1, 3>,
+		<1, 4>,
+		<2, 5>,
+		<3, 6>,
+		<4, 6>,
+		<4, 7>,
+		<5, 8>,
+		<6, 8>,
+		<7, 8>
 		};
 
 // czas wykonania i-tego zadania
 d = [
-	5, 10, 15, 20, 25, 30, 35
+	50, 47, 55, 46, 32, 57, 15, 62
 	];
