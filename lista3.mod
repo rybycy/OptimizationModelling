@@ -11,7 +11,6 @@ range Zadanie = 1..m; // zadania
 range Zasob = 1..n; //zasoby
 float B=100000;
 
-
 tuple Pred {
 	int pred;
 	int succ;
@@ -55,17 +54,14 @@ subject to{
   forall(i in Zadanie, c in zakresCzasu)
     ograniczenie_gorne:
 	  c + (1-wykonywane[i][c])*B >= t[i];
-	  //t[i] <= (1-wykonywane[i][c])*B + c;
 	
 	// ograniczenie zakresu trwania z gory
 	// wykonywane == 1 <=> c <= t[i] + d[i]
 	forall(i in Zadanie, c in zakresCzasu)
 	  ograniczenie_dolne:
-		c <= t[i] + d[i] + (1-wykonywane[i][c])*B;
-		//t[i] + d[i] <= c + wykonywane[i][c]*B;
-		//(c <= t[i] + d[i]) == wykonywane[i][c];
+		c <= t[i] + d[i] + (1-wykonywane[i][c])*B - 1;
 	 
-//	// dlugosc trwania zadania
+	// dlugosc trwania zadania
 	forall(i in Zadanie)
 	  dlugosc_trwania:
 	  (sum(c in zakresCzasu) wykonywane[i][c]) == d[i];
