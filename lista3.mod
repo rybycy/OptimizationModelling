@@ -4,77 +4,81 @@
  *********************************************/
 
 //parametry
-int m = ...; // liczba zadan
-int n = ...; // liczba zasobow
+int iLiczbaZadan = ...; 										//!< liczba zadan
+int iLiczbaZasobow = ...; 										//!< liczba zasobow
 
-range Zadanie = 1..m; // zadania
-range Zasob = 1..n; //zasoby
-float B=100000;
+range rZadania = 1..iLiczbaZadan; 								//!< enumerator zadan
+range rZasoby = 1..iLiczbaZasobow; 								//!< enumerator zasobow
+float DUZA_LICZBA=100000; 										//!< potrzebna, aby nadac duza wage zmiennej binarnej
 
-tuple Pred {
-	int pred;
-	int succ;
+tuple KolejnoscZadan {											//!< okreslenie par, w ktorych <i,j> -> i musi byc wykonane przed j
+	int najpierw;
+	int nastepnie;
 }
 
-float z[Zasob] = ...;
-int d[Zadanie] = ...; //d_ij czas wykonania zadania i
-int u[Zadanie][Zasob] = ...; //wykorzystanie zasobow przez zadania
-{Pred} pred = ...; //kolejnosc wykonywania zadan
+float DostepneZasoby[rZasoby] = ...; 							//!< ilosc dostepnych zasobow 
+int CzasTrwania[rZadania] = ...; 								//!< czas wykonania zadania i
+int WykorzystanieZasobu[rZadania][rZasoby] = ...; 				//!< wykorzystanie zasobu j przez zadanie i
+{KolejnoscZadan} Kolejnosc = ...; 								//!< kolejnosc wykonywania zadan
 
-tuple ZadanieZadanie {
-	int i;
-	int j;
-}
-
-int maxCzas = 1+sum(a in Zadanie) d[a];
-range zakresCzasu = 1..maxCzas;
-
-{ZadanieZadanie} Kolejnosc = {<i,j> | i in Zadanie, j in Zadanie: i<j};
+int iMaxCzas = 1+sum(a in rZadania) CzasTrwania[a];				//!< czas potrzebny do wykonania zadan pesymistycznie (szeregowo) 
+																//!  najwieksza mozliwa liczba dla czasu
+range rZakresCzasu = 1..iMaxCzas;								//!< enumerator czasowy (zawiera kwanty czasu)
 
 // zmienne decyzyjne
-dvar int+ t[Zadanie]; // moment rozpoczecia i-tego zadania 
-dvar float+ ms; //zmienna czas zakonczenia wykonawania wszystkich zadan - makespan 
-dvar boolean wspolne[Kolejnosc]; // wspolne[<a,b>] == zadania a,b posiadaja czesc wspolna
-dvar boolean wykonywane[Zadanie][zakresCzasu]; // wykonywane[a][b] == zadanie b jest w trakcie wykonania w czasie b
+dvar int+ rozpoczecie[rZadania]; 								//!< moment rozpoczecia i-tego zadania 
+dvar float+ ms; 												//!< zmienna czas zakonczenia wykonawania wszystkich zadan - makespan 
+dvar boolean wykonywane[rZadania][rZakresCzasu]; 				//!< wykonywane[a][b] == zadanie b jest w trakcie wykonania w czasie b
 
-// funckcja celu
+// funkcja celu
 minimize 
-	ms; //minimalizacja czasu zakonczenia wszystkich zadan
+	ms; 														//!< minimalizacja czasu zakonczenia wszystkich zadan
 
 subject to{
+  /**
+  * zaleznosci czasowe miedzy zadaniami
+  * nie zaczynamy przed ukonczeniem poprzedniego
+  */
+  forall(<i,j> in Kolejnosc)
+	poprzedzanie:
+		rozpoczecie[j]>=rozpoczecie[i]+CzasTrwania[i];
   
-  // zaleznosci czasowe miedzy zadaniami
-  // nie zaczynamy przed ukonczeniem poprzedniego
-  forall(<i,j> in pred)
-  	 poprzedzanie:
-  	   t[j]>=t[i]+d[i];
-  
-  // ograniczenie zakresu trwania z dolu
-  // wykonywane == 1 <=>  c >= t[i]
-  forall(i in Zadanie, c in zakresCzasu)
-    ograniczenie_gorne:
-	  c + (1-wykonywane[i][c])*B >= t[i];
-	
-	// ograniczenie zakresu trwania z gory
-	// wykonywane == 1 <=> c <= t[i] + d[i]
-	forall(i in Zadanie, c in zakresCzasu)
-	  ograniczenie_dolne:
-		c <= t[i] + d[i] + (1-wykonywane[i][c])*B - 1;
+  /**
+  * ograniczenie zakresu trwania z dolu
+  * wykonywane == 1 <=>  c >= t[i]
+  */
+  forall(i in rZadania, c in rZakresCzasu)
+	ograniczenie_gorne:
+		c + (1-wykonywane[i][c])*DUZA_LICZBA >= rozpoczecie[i];
+
+  /**
+  * ograniczenie zakresu trwania z gory
+  * wykonywane == 1 <=> c <= t[i] + d[i]
+  */
+  forall(i in rZadania, c in rZakresCzasu)
+	ograniczenie_dolne:
+		c <= rozpoczecie[i] + CzasTrwania[i] + (1-wykonywane[i][c])*DUZA_LICZBA - 1;
 	 
-	// dlugosc trwania zadania
-	forall(i in Zadanie)
-	  dlugosc_trwania:
-	  (sum(c in zakresCzasu) wykonywane[i][c]) == d[i];
+  /**
+  * dlugosc trwania zadania
+  */
+  forall(i in rZadania)
+	dlugosc_trwania:
+	  (sum(c in rZakresCzasu) wykonywane[i][c]) == CzasTrwania[i];
 	
-	// ograniczenie zasoobw
-	forall(c in zakresCzasu, a in Zasob)
-	  	zasoby:
-	  	sum(i in Zadanie) wykonywane[i][c]*u[i][a] <= z[a];
+  /**
+  * ograniczenie zasoobw
+  */
+  forall(c in rZakresCzasu, a in rZasoby)
+  	zasoby:
+		sum(i in rZadania) wykonywane[i][c]*WykorzystanieZasobu[i][a] <= DostepneZasoby[a];
   	 
-  // ms rowna sie czas zakonczenia wszystkich zadan na ostatniej maszynie	  	   
-  forall(i in Zadanie)
+  /**
+  * ms rowna sie czas zakonczenia wszystkich zadan na ostatniej maszynie
+  */	  	   
+  forall(i in rZadania)
   	dociskanie:
-  	  t[i]+d[i]<=ms;   
+  	  rozpoczecie[i]+CzasTrwania[i]<=ms;   
 }  
 
                             
