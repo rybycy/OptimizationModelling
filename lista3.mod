@@ -48,7 +48,7 @@ subject to{
   * wykonywane == 1 <=>  c >= t[i]
   */
   forall(i in rZadania, c in rZakresCzasu)
-	ograniczenie_gorne:
+	ograniczenie_dolne:
 		c + (1-wykonywane[i][c])*DUZA_LICZBA >= rozpoczecie[i];
 
   /**
@@ -56,7 +56,7 @@ subject to{
   * wykonywane == 1 <=> c <= t[i] + d[i]
   */
   forall(i in rZadania, c in rZakresCzasu)
-	ograniczenie_dolne:
+	ograniczenie_gorne:
 		c <= rozpoczecie[i] + CzasTrwania[i] + (1-wykonywane[i][c])*DUZA_LICZBA - 1;
 	 
   /**
@@ -74,12 +74,43 @@ subject to{
 		sum(i in rZadania) wykonywane[i][c]*WykorzystanieZasobu[i][a] <= DostepneZasoby[a];
   	 
   /**
-  * ms rowna sie czas zakonczenia wszystkich zadan na ostatniej maszynie
+  * ms rowna sie czas zakonczenia wszystkich zadan
   */	  	   
   forall(i in rZadania)
   	dociskanie:
   	  rozpoczecie[i]+CzasTrwania[i]<=ms;   
 }  
 
+execute OUTPUT_NA_KONSOLE {
+   writeln("\n Wykorzystanie zasobow w poszczegolnych kwantach czasu:\n");
+	// ladne formatowanie wykorzystywanych zasobow dziala tylko dla liczb co najwyzej dwucyfrowych...
+	write("Z|")
+	for(var v in rZakresCzasu)
+   	for(var a in rZasoby)
+   	{
+   		var s=0;
+   		for(var i in rZadania)
+   			s=s+wykonywane[i][v]*WykorzystanieZasobu[i][a];
+    	write(s, " ");
+    	if(s<10)
+    	{
+    		write(" ")    	
+    	}
+    	
+   	}    	    
+   	writeln(" ")	
+   	for(var a in rZadania)
+   	{
+		write(a, "|")   	
+   		for(var b in rZakresCzasu)
+   		{
+   			if(wykonywane[a][b]==1)
+   				write("-  ")
+   			else
+   				write("   ")   		
+   		}   	
+   		writeln("")
+   	}
+}
                             
                                                      
